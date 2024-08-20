@@ -1,8 +1,18 @@
 import { DisclosureFrame } from '@sd-jwt/types';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 import { createSignerVerifier, digest, generateSalt } from "./utils";
+import {StatusList} from "@sd-jwt/jwt-status-list";
+
+const MAX_STATUS_LIST_SIZE = 10
 
 export const runDemo = async () => {
+
+  // initialise status list with 2-bits per status, values as follows:
+  // 0 - ISSUED
+  // 1 - SUSPENDED (temporarily)
+  // 2 - REVOKED (permanently)
+  // 3 - status slot UNUSED (i.e. not allocated)
+  const statusList = new StatusList(Array.apply(null, Array(MAX_STATUS_LIST_SIZE)).map(() => 3), 2)
 
   const { signer, verifier } = await createSignerVerifier();
 
@@ -32,6 +42,9 @@ export const runDemo = async () => {
     ssn: '123-45-6789',
     id: '1234',
   };
+
+  // set statusList for new VC as index 1 (i.e. second position in the array)
+  statusList.setStatus(1, 0)
 
   // Issuer defines the disclosure frame to specify which claims can be disclosed/undisclosed
   const disclosureFrame: DisclosureFrame<typeof claims> = {
@@ -67,6 +80,7 @@ export const runDemo = async () => {
   console.log("valid", valid)
   console.log("presentation", presentation)
   console.log("verified", verified)
+  console.log("status list", statusList)
 }
 
 runDemo().then(() => {
